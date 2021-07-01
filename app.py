@@ -3,10 +3,12 @@ import edgeiq
 import os
 import json
 from posture import CheckPosture
-
+from datetime import datetime
+import os
 
 def main():
-
+    timer = []
+    counter = 0
     posture = CheckPosture()
 
     pose_estimator = edgeiq.PoseEstimation("alwaysai/human-pose")
@@ -43,8 +45,28 @@ def main():
                     correct_posture = posture.correct_posture()
                     if not correct_posture:
                         text.append(posture.build_message())
-                    # make a sound to alert the user to improper posture
-                    print("\a")
+                        now = datetime.now()
+
+                        current_time = now.strftime("%H:%M:%S")
+                        print("Current Time =", current_time)
+                        timer.append(current_time.split(":"))
+                        counter += 1
+                        print(counter)
+                        print("\a")
+                        s = int(timer[-1][2]) - int(timer[0][2])
+                        if timer[-1][1] != timer[0][1]:
+                            s = (60 - int(timer[0][2])) + int(timer[-1][2])
+
+                        if s > 30:
+                            #print("************************************")
+                            title = "Correct Your Posture"
+                            message = " ~X Æ A-Xii"
+                            command = f'''
+                                osascript -e 'display notification "{message}" with title "{title}"'
+                                '''
+                            os.system(command)
+
+
                 streamer.send_data(results.draw_poses(frame), text)
 
                 fps.update()
@@ -59,6 +81,8 @@ def main():
                     break
     finally:
         fps.stop()
+        print(counter)
+        print(timer)
         print("elapsed time: {:.2f}".format(fps.get_elapsed_seconds()))
         print("approx. FPS: {:.2f}".format(fps.compute_fps()))
 
